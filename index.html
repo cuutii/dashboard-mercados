@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de Mercados — Acciones y Cripto en tiempo real</title>
+<meta name="description" content="Dashboard web estático para ver precios de acciones y criptomonedas en tiempo real. Sin build, se abre con doble clic.">
+<link rel="stylesheet" href="styles.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.coingecko.com https://api.allorigins.win; img-src 'self' data: https:; font-src 'self' data:;">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">📊 Dashboard de Mercados</div>
+  <div class="topbar-right">
+    <span id="lastUpdate" class="muted">—</span>
+    <button id="refreshBtn" class="btn">Actualizar</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="crypto">Criptomonedas</button>
+  <button class="tab" data-tab="stocks">Acciones</button>
+  <button class="tab" data-tab="watchlist">Mi Watchlist</button>
+</nav>
+
+<main>
+  <!-- CRYPTO -->
+  <section id="tab-crypto" class="panel active">
+    <div class="toolbar">
+      <input id="cryptoSearch" class="search" placeholder="Buscar moneda (ej. bitcoin, eth)..." />
+      <select id="cryptoLimit" class="select">
+        <option value="10">Top 10</option>
+        <option value="25" selected>Top 25</option>
+        <option value="50">Top 50</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th>#</th><th>Moneda</th><th>Precio (USD)</th><th>24h %</th><th>Cap. mercado</th><th>Acción</th>
+        </tr></thead>
+        <tbody id="cryptoBody"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="chart-box">
+      <h3 id="cryptoChartTitle">Selecciona una moneda para ver el gráfico (7 días)</h3>
+      <canvas id="cryptoChart"></canvas>
+    </div>
+  </section>
+
+  <!-- STOCKS -->
+  <section id="tab-stocks" class="panel">
+    <div class="toolbar">
+      <input id="stockSearch" class="search" placeholder="Buscar ticker (ej. AAPL)..." />
+      <button id="addStockBtn" class="btn">+ Agregar ticker</button>
+    </div>
+    <p class="muted small">Datos vía Yahoo Finance (proxy público). Si falla, se muestran valores de ejemplo.</p>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th>Ticker</th><th>Nombre</th><th>Precio (USD)</th><th>Cambio %</th><th>Volumen</th><th>Acción</th>
+        </tr></thead>
+        <tbody id="stockBody"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- WATCHLIST -->
+  <section id="tab-watchlist" class="panel">
+    <p class="muted">Tu watchlist se guarda en este navegador (localStorage).</p>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th>Activo</th><th>Tipo</th><th>Precio (USD)</th><th>Cambio %</th><th>Acción</th>
+        </tr></thead>
+        <tbody id="watchBody"><tr><td colspan="5" class="muted">Vacía. Agrega desde las otras pestañas.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  Datos: CoinGecko (cripto) y Yahoo Finance (acciones, vía proxy). Solo con fines informativos, no es asesoramiento financiero.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

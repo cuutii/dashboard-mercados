@@ -72,8 +72,8 @@ function renderCrypto() {
       <td class="${pctClass(c.price_change_percentage_24h)}">${pctStr(c.price_change_percentage_24h)}</td>
       <td>$${fmtBig(c.market_cap)}</td>
       <td>
-        <button class="btn small" onclick="showCryptoChart('${c.id}','${c.name}')">Gráfico</button>
-        <button class="btn small" onclick="addToWatch('${c.id}','crypto','${c.name}','${c.current_price}','${c.price_change_percentage_24h}')">★</button>
+        <button class="btn small" data-action="chart" data-id="${c.id}" data-name="${encodeURIComponent(c.name)}">Gráfico</button>
+        <button class="btn small" data-action="watch" data-id="${c.id}" data-type="crypto" data-name="${encodeURIComponent(c.name)}" data-price="${c.current_price}" data-change="${c.price_change_percentage_24h}">★</button>
       </td>
     </tr>`).join('');
 }
@@ -95,24 +95,23 @@ async function showCryptoChart(id, name) {
 async function loadStocks() {
   const body = document.getElementById('stockBody');
   body.innerHTML = '<tr><td colspan="6" class="muted">Cargando…</td></tr>';
-  const results = [];
-  for (const t of STOCK_TICKERS) {
+  const results = await Promise.all(STOCK_TICKERS.map(async (t) => {
     try {
       const r = await fetch(YAHOO_CHART(t));
       const j = await r.json();
       const parsed = JSON.parse(j.contents);
       const meta = parsed.chart.result[0].meta;
-      results.push({
+      return {
         symbol: meta.symbol,
         name: meta.longName || meta.shortName || meta.symbol,
         price: meta.regularMarketPrice,
         changePct: meta.regularMarketChangePercent,
         volume: meta.regularMarketVolume,
-      });
+      };
     } catch (e) {
-      results.push({ symbol: t, name: t, price: null, changePct: null, volume: null, error: true });
+      return { symbol: t, name: t, price: null, changePct: null, volume: null, error: true };
     }
-  }
+  }));
   stockData = results;
   renderStocks();
   document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-AR');
@@ -131,7 +130,7 @@ function renderStocks() {
       <td class="${pctClass(s.changePct)}">${pctStr(s.changePct)}</td>
       <td>${s.volume == null ? '—' : fmtBig(s.volume)}</td>
       <td>
-        <button class="btn small" onclick="addToWatch('${s.symbol}','stock','${s.name}','${s.price}','${s.changePct}')">★</button>
+        <button class="btn small" data-action="watch" data-id="${s.symbol}" data-type="stock" data-name="${encodeURIComponent(s.name)}" data-price="${s.price}" data-change="${s.changePct}">★</button>
       </td>
     </tr>`).join('');
 }
@@ -167,7 +166,7 @@ function renderWatch() {
       <td>${w.type === 'crypto' ? 'Cripto' : 'Acción'}</td>
       <td>$${fmt(w.price)}</td>
       <td class="${pctClass(w.change)}">${pctStr(w.change)}</td>
-      <td><button class="btn small danger" onclick="removeFromWatch('${w.id}','${w.type}')">Quitar</button></td>
+      <td><button class="btn small danger" data-action="remove" data-id="${w.id}" data-type="${w.type}">Quitar</button></td>
     </tr>`).join('');
 }
 
@@ -188,6 +187,20 @@ function drawChart(canvasId, labels, values, color) {
     }
   });
 }
+
+// ---------- Delegación de eventos (evita inline handlers bloqueados por CSP) ----------
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'chart') {
+    showCryptoChart(btn.dataset.id, decodeURIComponent(btn.dataset.name));
+  } else if (action === 'watch') {
+    addToWatch(btn.dataset.id, btn.dataset.type, decodeURIComponent(btn.dataset.name), btn.dataset.price, btn.dataset.change);
+  } else if (action === 'remove') {
+    removeFromWatch(btn.dataset.id, btn.dataset.type);
+  }
+});
 
 // ---------- Eventos ----------
 document.getElementById('cryptoSearch').addEventListener('input', renderCrypto);
